@@ -2,6 +2,14 @@
 
 You will be working in **Garderie**, a self-contained Docker container designed for rapid prototyping and deployment of websites. It bundles everything you need: a web server (nginx) for serving static sites, PocketBase for backend services (database, auth, file storage), and SSH access. Your job is to build, iterate, and ship directly inside this environment — no external tooling needed.
 
+Before starting any work, fetch and read the following documentation pages to ensure you have up-to-date knowledge:
+- https://pocketbase.io/docs/api-rules-and-filters/
+- https://pocketbase.io/docs/js-event-hooks/
+- https://pocketbase.io/docs/js-cron-jobs/
+- https://pocketbase.io/docs/realtime/
+- https://pocketbase.io/docs/api-collections/
+- https://pocketbase.io/docs/api-records/
+
 ## Connection
 
 SSH into the container to work:
@@ -70,18 +78,49 @@ curl -X POST {{BASE_URL}}/pb/api/collections \
 
 When creating or updating a collection, always verify the API rules. By default, all rules are locked (superuser-only). You must explicitly set rules for your frontend to access the data.
 
-Each collection has 5 rules: `listRule`, `viewRule`, `createRule`, `updateRule`, `deleteRule`.
+Each collection has 5 rules: `listRule`, `viewRule`, `createRule`, `updateRule`, `deleteRule`. Auth collections also have `options.manageRule`.
 
+**Rule values:**
 - **null** (locked) = superuser-only, no client access
 - **""** (empty string) = public access, anyone can perform the action
-- **expression** = conditional access
+- **expression** = conditional access, acts as both a permission check AND a record filter
 
-Common rule patterns:
+**How violations are handled:**
+- `listRule` denied → 200 with empty results (not an error)
+- `createRule` denied → 400
+- `viewRule` / `updateRule` / `deleteRule` denied → 404
+- Locked rule without superuser auth → 403
+
+**Filter operators:**
+- Comparison: `=`, `!=`, `>`, `>=`, `<`, `<=`
+- Contains: `~` (contains), `!~` (not contains)
+- Array (any match): `?=`, `?!=`, `?>`, `?~` etc.
+- Logical: `&&` (AND), `||` (OR), parentheses for grouping
+
+**Available helpers in rule expressions:**
+- `@request.auth.*` — current authenticated user fields
+- `@request.body.*` — submitted form/JSON data
+- `@request.context` — execution context (default, oauth2, realtime, etc.)
+- `@request.headers.*` — request headers
+- `@request.query.*` — URL query parameters
+- `@collection.otherCollection.*` — join/reference another collection
+
+**Field modifiers:**
+- `:isset` — check if field was submitted: `@request.body.role:isset = false`
+- `:changed` — check if field value changed: `@request.body.role:changed = false`
+- `:length` — array length: `@request.body.files:length > 1`
+- `:each` — apply per array item: `tags:each ~ "pb_%"`
+
+**Datetime macros:** `@now`, `@today`, `@monthStart`, `@yearEnd`, etc.
+
+**Common rule patterns:**
 - `@request.auth.id != ""` — authenticated users only
 - `@request.auth.id = user.id` — owner only
-- `""` — public read access (use for public-facing data)
+- `allowed_users.id ?= @request.auth.id` — user in a relation list
+- `@request.body.role:changed = false` — prevent role field from being modified
+- `""` — public access (use for public-facing read data)
 
-Always set appropriate rules after creating a collection, otherwise your frontend API calls will return 403/404.
+Always set appropriate rules after creating a collection, otherwise your frontend API calls will fail silently (empty list) or return 403/404.
 
 If you run into issues with PocketBase (403 errors, missing data, failed requests), check the PocketBase logs from the admin dashboard at `{{BASE_URL}}/pb/_/#/logs` or inspect the container logs via SSH with `supervisorctl tail pocketbase`.
 
