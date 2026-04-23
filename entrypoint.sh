@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Set root password for SSH
+if [ -n "$SSH_PASSWORD" ]; then
+    echo "root:$SSH_PASSWORD" | chpasswd
+fi
+
+# Generate SSH host keys if missing
+ssh-keygen -A 2>/dev/null
+
+# Seed default PocketBase hooks if hooks folder is empty
+if [ -d /pb_hooks ] && [ -z "$(ls -A /pb_hooks 2>/dev/null)" ]; then
+    cp /pb_hooks_default/* /pb_hooks/ 2>/dev/null || true
+fi
+
+# Create PocketBase admin on first run
+if [ -n "$PB_ADMIN_EMAIL" ] && [ -n "$PB_ADMIN_PASSWORD" ]; then
+    pocketbase superuser create "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASSWORD" --dir /pb_data 2>/dev/null || true
+fi
+
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
