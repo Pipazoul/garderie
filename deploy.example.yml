@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: garderie
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: garderie-secrets
+  namespace: garderie
+type: Opaque
+stringData:
+  PB_ADMIN_EMAIL: admin@example.com
+  PB_ADMIN_PASSWORD: changeme456
+  SSH_PASSWORD: changeme789
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: garderie-data
+  namespace: garderie
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garderie
+  namespace: garderie
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: garderie
+  template:
+    metadata:
+      labels:
+        app: garderie
+    spec:
+      containers:
+        - name: garderie
+          image: yassinsiouda/garderie:0.1
+          ports:
+            - containerPort: 8050
+          envFrom:
+            - secretRef:
+                name: garderie-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /sites
+              subPath: sites
+            - name: data
+              mountPath: /pb_data
+              subPath: pb_data
+            - name: data
+              mountPath: /pb_hooks
+              subPath: pb_hooks
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "500m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: garderie-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garderie
+  namespace: garderie
+spec:
+  selector:
+    app: garderie
+  ports:
+    - port: 8050
+      targetPort: 8050
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: garderie
+  namespace: garderie
+spec:
+  rules:
+    - host: garderie.k3s.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: garderie
+                port:
+                  number: 8050

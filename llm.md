@@ -52,6 +52,8 @@ PocketBase provides database, authentication, file storage, and a REST API. The 
 
 ### Collections (Database)
 
+Always prefix collection names with your app name to avoid conflicts with other apps sharing the same PocketBase instance: `appname_collectionname` (e.g. `blog_posts`, `blog_comments`, `shop_products`).
+
 Create and manage collections via the admin dashboard or API:
 
 ```bash
@@ -126,9 +128,34 @@ If you run into issues with PocketBase (403 errors, missing data, failed request
 
 Full documentation: https://pocketbase.io/docs/api-rules-and-filters/
 
-### Authentication
+### Collection Types
 
-PocketBase has built-in auth collections. Authenticate to get a token:
+PocketBase has 3 collection types:
+
+- **base** — standard data storage (posts, products, logs, etc.)
+- **auth** — data storage + built-in authentication (users, admins, customers, etc.)
+- **view** — read-only, generated from SQL queries (dashboards, aggregations, etc.)
+
+### Auth Collections
+
+Auth collections are special collections with built-in user management. You can create **multiple auth collections** for different user types (e.g. `app_users`, `app_admins`, `app_staff`).
+
+Every auth collection automatically includes these fields:
+- `email` — user email
+- `emailVisibility` — whether email is visible to other users
+- `password` — hashed password (hidden from API responses)
+- `verified` — email verification status
+- `tokenKey` — internal auth token key (hidden)
+
+Auth collections support multiple authentication methods:
+- **Password** — email/username + password login
+- **OAuth2** — external providers (Google, GitHub, etc.)
+- **OTP** — one-time password via email
+- **MFA** — multi-factor authentication
+
+You can add custom fields to auth collections just like base collections (e.g. `name`, `avatar`, `role`).
+
+Authenticate to get a token:
 
 ```bash
 # Admin auth (for management)

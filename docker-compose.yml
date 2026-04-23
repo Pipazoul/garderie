@@ -1,6 +1,6 @@
 services:
   garderie:
-    image: yassinsiouda/garderie:dev
+    image: yassinsiouda/garderie:0.1
     build: .
     ports:
       - "8050:8050"
