@@ -1,9 +1,9 @@
 services:
   garderie:
-    image: yassinsiouda/garderie:0.1
+    image: yassinsiouda/garderie:0.3
     build: .
     ports:
-      - "8050:8050"
+      - "8050:80"
     volumes:
       - ./data/sites:/sites
       - ./data/pb_data:/pb_data
@@ -11,7 +11,8 @@ services:
     environment:
       - PB_ADMIN_EMAIL=${PB_ADMIN_EMAIL}
       - PB_ADMIN_PASSWORD=${PB_ADMIN_PASSWORD}
-      - SSH_PASSWORD=${SSH_PASSWORD}
+      - SHELL_USER=${SHELL_USER}
+      - SHELL_PASSWORD=${SHELL_PASSWORD}
     env_file:
       - .env
     deploy:

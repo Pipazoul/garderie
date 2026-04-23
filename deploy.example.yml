@@ -1,24 +1,18 @@
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: garderie
----
-apiVersion: v1
 kind: Secret
 metadata:
-  name: garderie-secrets
-  namespace: garderie
+  name: myapp-garderie-secrets
 type: Opaque
 stringData:
   PB_ADMIN_EMAIL: admin@example.com
   PB_ADMIN_PASSWORD: changeme456
-  SSH_PASSWORD: changeme789
+  SHELL_USER: admin
+  SHELL_PASSWORD: changeme789
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: garderie-data
-  namespace: garderie
+  name: myapp-garderie-data
 spec:
   accessModes:
     - ReadWriteOnce
@@ -29,26 +23,25 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: garderie
-  namespace: garderie
+  name: myapp-garderie
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: garderie
+      app: myapp-garderie
   template:
     metadata:
       labels:
-        app: garderie
+        app: myapp-garderie
     spec:
       containers:
-        - name: garderie
+        - name: myapp-garderie
           image: yassinsiouda/garderie:0.1
           ports:
-            - containerPort: 8050
+            - containerPort: 80
           envFrom:
             - secretRef:
-                name: garderie-secrets
+                name: myapp-garderie-secrets
           volumeMounts:
             - name: data
               mountPath: /sites
@@ -66,34 +59,33 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: garderie-data
+            claimName: myapp-garderie-data
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: garderie
-  namespace: garderie
+  name: myapp-garderie
 spec:
   selector:
-    app: garderie
+    app: myapp-garderie
   ports:
-    - port: 8050
-      targetPort: 8050
+    - name: http
+      port: 80
+      targetPort: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: garderie
-  namespace: garderie
+  name: myapp-garderie
 spec:
   rules:
-    - host: garderie.k3s.lan
+    - host: myapp-garderie.k3s.lan
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: garderie
+                name: myapp-garderie
                 port:
-                  number: 8050
+                  number: 80

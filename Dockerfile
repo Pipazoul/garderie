@@ -7,15 +7,16 @@ RUN apt-get update && apt-get install -y \
     curl \
     nginx \
     supervisor \
-    openssh-server \
-    sslh \
     bash \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure SSH
-RUN mkdir -p /run/sshd \
-    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+# Install shell2http
+ARG SHELL2HTTP_VERSION=1.17.0
+RUN wget -q "https://github.com/msoap/shell2http/releases/download/v${SHELL2HTTP_VERSION}/shell2http_${SHELL2HTTP_VERSION}_linux_amd64.tar.gz" \
+    -O /tmp/shell2http.tar.gz \
+    && tar -xzf /tmp/shell2http.tar.gz -C /usr/local/bin/ shell2http \
+    && chmod +x /usr/local/bin/shell2http \
+    && rm /tmp/shell2http.tar.gz
 
 # Install PocketBase
 ARG PB_VERSION=0.25.9

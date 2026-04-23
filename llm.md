@@ -1,6 +1,6 @@
 # LLM Working Instructions
 
-You will be working in **Garderie**, a self-contained Docker container designed for rapid prototyping and deployment of websites. It bundles everything you need: a web server (nginx) for serving static sites, PocketBase for backend services (database, auth, file storage), and SSH access. Your job is to build, iterate, and ship directly inside this environment — no external tooling needed.
+You will be working in **Garderie**, a self-contained Docker container designed for rapid prototyping and deployment of websites. It bundles everything you need: a web server (nginx) for serving static sites, PocketBase for backend services (database, auth, file storage), and a shell command endpoint over HTTP. Your job is to build, iterate, and ship directly inside this environment — no external tooling needed.
 
 Before starting any work, fetch and read the following documentation pages to ensure you have up-to-date knowledge:
 - https://pocketbase.io/docs/api-rules-and-filters/
@@ -12,23 +12,31 @@ Before starting any work, fetch and read the following documentation pages to en
 
 ## Connection
 
-SSH into the container to work:
-
-```
-ssh root@{{HOST}} -p {{PORT}}
-```
-
-All work happens inside the container. You have full root access.
-
-It will probably be easier to create files locally on the host and send them to the container using `scp` or `sshpass`:
+Execute shell commands inside the container via HTTP:
 
 ```bash
-# Copy a single file
-sshpass -p '{{SSH_PASSWORD}}' scp -P {{PORT}} ./index.html root@{{HOST}}:/sites/myapp/index.html
+# Run a command
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} "{{BASE_URL}}/run?cmd=ls+-la+/sites"
 
-# Copy an entire folder
-sshpass -p '{{SSH_PASSWORD}}' scp -r -P {{PORT}} ./myapp root@{{HOST}}:/sites/
+# Create a directory
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} "{{BASE_URL}}/run?cmd=mkdir+-p+/sites/myapp"
+
+# Write a file
+curl "{{BASE_URL}}/run?cmd=cat+>+/sites/myapp/index.html" --data-urlencode "v_cmd=cat > /sites/myapp/index.html << 'EOF'
+<html><body>Hello World</body></html>
+EOF"
 ```
+
+For creating files, it will probably be easier to build them locally and write them via the `/run` endpoint:
+
+```bash
+# Write a file's content using the shell endpoint
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} "{{BASE_URL}}/run" --data-urlencode "cmd=cat > /sites/myapp/index.html << 'ENDOFFILE'
+$(cat ./index.html)
+ENDOFFILE"
+```
+
+The `/run` endpoint requires HTTP Basic Authentication.
 
 ## Folder Structure
 
@@ -53,6 +61,13 @@ PocketBase provides database, authentication, file storage, and a REST API. The 
 ### Collections (Database)
 
 Always prefix collection names with your app name to avoid conflicts with other apps sharing the same PocketBase instance: `appname_collectionname` (e.g. `blog_posts`, `blog_comments`, `shop_products`).
+
+Important: PocketBase collections do NOT have auto-generated `created` or `updated` fields by default. If you need to sort or filter by creation date, you must explicitly add `autodate` fields to your collection schema when creating it. Do not use `-created` or `+created` in sort parameters unless the field exists. Example:
+
+```json
+{"name": "created", "type": "autodate", "onCreate": true, "onUpdate": false},
+{"name": "updated", "type": "autodate", "onCreate": true, "onUpdate": true}
+```
 
 Create and manage collections via the admin dashboard or API:
 
@@ -275,12 +290,12 @@ Full documentation: https://pocketbase.io/docs/js-cron-jobs/
 
 ## Workflow
 
-1. SSH into the container
+1. Use the `/run` endpoint to execute commands inside the container
 2. Create a folder in `/sites/` for your project
-3. Build your frontend (HTML/CSS/JS)
+3. Build your frontend (HTML/CSS/JS) and deploy files via `/run`
 4. If you need a backend (data, auth, files), use PocketBase:
-   - Open the admin dashboard at `/pb/_/` to create collections
-   - Or use the API directly from the terminal
+   - Use the API directly via `/pb/api/...`
+   - Or open the admin dashboard at `/pb/_/` to create collections
 5. Connect your frontend to PocketBase via `/pb/api/...`
 6. Test by visiting the site URL in a browser
 
@@ -290,18 +305,16 @@ Full documentation: https://pocketbase.io/docs/js-cron-jobs/
 
 Before you can start working, you need the connection credentials. If the user hasn't already provided them, ask for the following details (they should have received these from the devops team):
 
-- Host and Port (e.g. myserver.com:8050)
-- SSH password
+- Base URL (e.g. https://myapp.example.com)
+- Shell user and password (for the /run endpoint)
 - PocketBase admin email and password (for the dashboard at /pb/_/)
 
-Do not proceed until you have these credentials. Once received, use them to SSH in and begin working.
+Do not proceed until you have these credentials. Once received, use the `/run` endpoint to begin working.
 
 ```
-HOST:               
-PORT:               
 BASE_URL:           
-
-SSH_PASSWORD:       
+SHELL_USER:         
+SHELL_PASSWORD:     
 PB_ADMIN_URL:       /pb/_/
 PB_ADMIN_EMAIL:     
 PB_ADMIN_PASSWORD:  

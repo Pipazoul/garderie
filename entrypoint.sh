@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# Set root password for SSH
-if [ -n "$SSH_PASSWORD" ]; then
-    echo "root:$SSH_PASSWORD" | chpasswd
-fi
-
-# Generate SSH host keys if missing
-ssh-keygen -A 2>/dev/null
-
 # Seed default PocketBase hooks if hooks folder is empty
 if [ -d /pb_hooks ] && [ -z "$(ls -A /pb_hooks 2>/dev/null)" ]; then
     cp /pb_hooks_default/* /pb_hooks/ 2>/dev/null || true
