@@ -38,6 +38,29 @@ ENDOFFILE"
 
 The `/run` endpoint requires HTTP Basic Authentication.
 
+### WebDAV
+
+The `/sites` folder is also accessible via WebDAV at `{{BASE_URL}}/webdav/`. This is the easiest way to upload, download, and manage files. Uses the same credentials as the shell endpoint (`SHELL_USER`/`SHELL_PASSWORD`).
+
+```bash
+# Upload a file
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} -T ./index.html "{{BASE_URL}}/webdav/myapp/index.html"
+
+# Create a directory
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} -X MKCOL "{{BASE_URL}}/webdav/myapp/"
+
+# Download a file
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} "{{BASE_URL}}/webdav/myapp/index.html"
+
+# Delete a file
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} -X DELETE "{{BASE_URL}}/webdav/myapp/index.html"
+
+# List files
+curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} -X PROPFIND "{{BASE_URL}}/webdav/"
+```
+
+For bulk file uploads, prefer WebDAV over the `/run` endpoint — it's more reliable for binary files and large transfers.
+
 ## Folder Structure
 
 ```
