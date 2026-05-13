@@ -12,14 +12,6 @@ RUN apt-get update && apt-get install -y \
     gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
-# Install shell2http
-ARG SHELL2HTTP_VERSION=1.17.0
-RUN wget -q "https://github.com/msoap/shell2http/releases/download/v${SHELL2HTTP_VERSION}/shell2http_${SHELL2HTTP_VERSION}_linux_amd64.tar.gz" \
-    -O /tmp/shell2http.tar.gz \
-    && tar -xzf /tmp/shell2http.tar.gz -C /usr/local/bin/ shell2http \
-    && chmod +x /usr/local/bin/shell2http \
-    && rm /tmp/shell2http.tar.gz
-
 # Install PocketBase
 ARG PB_VERSION=0.25.9
 RUN wget -q "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip" \

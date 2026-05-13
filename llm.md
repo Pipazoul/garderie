@@ -1,6 +1,6 @@
 # LLM Working Instructions
 
-You will be working in **Garderie**, a self-contained Docker container designed for rapid prototyping and deployment of websites. It bundles everything you need: a web server (nginx) for serving static sites, PocketBase for backend services (database, auth, file storage), and a shell command endpoint over HTTP. Your job is to build, iterate, and ship directly inside this environment — no external tooling needed.
+You will be working in **Garderie**, a self-contained Docker container designed for rapid prototyping and deployment of websites. It bundles everything you need: a web server (nginx) for serving static sites, PocketBase for backend services (database, auth, file storage), and WebDAV for file management. Your job is to build, iterate, and ship directly inside this environment — no external tooling needed.
 
 Before starting any work, fetch and read the following documentation pages to ensure you have up-to-date knowledge:
 - https://pocketbase.io/docs/api-rules-and-filters/
@@ -11,32 +11,6 @@ Before starting any work, fetch and read the following documentation pages to en
 - https://pocketbase.io/docs/api-records/
 
 ## Connection
-
-Execute shell commands inside the container via HTTP:
-
-```bash
-# Run a command
-curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} "{{BASE_URL}}/run?cmd=ls+-la+/sites"
-
-# Create a directory
-curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} "{{BASE_URL}}/run?cmd=mkdir+-p+/sites/myapp"
-
-# Write a file
-curl "{{BASE_URL}}/run?cmd=cat+>+/sites/myapp/index.html" --data-urlencode "v_cmd=cat > /sites/myapp/index.html << 'EOF'
-<html><body>Hello World</body></html>
-EOF"
-```
-
-For creating files, it will probably be easier to build them locally and write them via the `/run` endpoint:
-
-```bash
-# Write a file's content using the shell endpoint
-curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} "{{BASE_URL}}/run" --data-urlencode "cmd=cat > /sites/myapp/index.html << 'ENDOFFILE'
-$(cat ./index.html)
-ENDOFFILE"
-```
-
-The `/run` endpoint requires HTTP Basic Authentication.
 
 ### WebDAV
 
@@ -59,7 +33,7 @@ curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} -X DELETE "{{BASE_URL}}/webdav/myapp/i
 curl -u {{SHELL_USER}}:{{SHELL_PASSWORD}} -X PROPFIND "{{BASE_URL}}/webdav/"
 ```
 
-For bulk file uploads, prefer WebDAV over the `/run` endpoint — it's more reliable for binary files and large transfers.
+WebDAV is the primary way to upload, download, and manage files in the container.
 
 ## Folder Structure
 
@@ -313,10 +287,9 @@ Full documentation: https://pocketbase.io/docs/js-cron-jobs/
 
 ## Workflow
 
-1. Use the `/run` endpoint to execute commands inside the container
-2. Create a folder in `/sites/` for your project
-3. Build your frontend (HTML/CSS/JS) and deploy files via `/run`
-4. If you need a backend (data, auth, files), use PocketBase:
+1. Create a folder in `/sites/` via WebDAV
+2. Build your frontend (HTML/CSS/JS) and upload files via WebDAV
+3. If you need a backend (data, auth, files), use PocketBase:
    - Use the API directly via `/pb/api/...`
    - Or open the admin dashboard at `/pb/_/` to create collections
 5. Connect your frontend to PocketBase via `/pb/api/...`
@@ -329,10 +302,10 @@ Full documentation: https://pocketbase.io/docs/js-cron-jobs/
 Before you can start working, you need the connection credentials. If the user hasn't already provided them, ask for the following details (they should have received these from the devops team):
 
 - Base URL (e.g. https://myapp.example.com)
-- Shell user and password (for the /run endpoint)
+- Shell user and password (for WebDAV access)
 - PocketBase admin email and password (for the dashboard at /pb/_/)
 
-Do not proceed until you have these credentials. Once received, use the `/run` endpoint to begin working.
+Do not proceed until you have these credentials. Once received, use WebDAV to begin working.
 
 ```
 BASE_URL:           
