@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     rclone \
     supervisor \
     bash \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Install shell2http
@@ -31,7 +32,7 @@ RUN wget -q "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VE
 RUN mkdir -p /sites /pb_data /var/log/supervisor
 
 # Copy configs and entrypoint
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/nginx.conf.template
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

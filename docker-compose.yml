@@ -1,9 +1,9 @@
 services:
   garderie:
-    image: yassinsiouda/garderie:0.55
+    image: yassinsiouda/garderie:0.60
     build: .
     ports:
-      - "8050:80"
+      - "8050:5000"
     volumes:
       - ./data/sites:/sites
       - ./data/pb_data:/pb_data

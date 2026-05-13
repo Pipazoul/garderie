@@ -14,3 +14,4 @@ PORT: 8050
 SSH_PASSWORD: pass      
 PB_ADMIN_EMAIL: user@example.com  
 PB_ADMIN_PASSWORD:  pass
+NGINX_PORT: 80 (internal nginx listening port, useful when running multiple containers in the same pod)

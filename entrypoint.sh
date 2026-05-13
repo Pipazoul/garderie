@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Set default nginx port
+export NGINX_PORT="${NGINX_PORT:-80}"
+
+# Generate nginx config from template
+envsubst '${NGINX_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
 # Seed default PocketBase hooks if hooks folder is empty
 if [ -d /pb_hooks ] && [ -z "$(ls -A /pb_hooks 2>/dev/null)" ]; then
     cp /pb_hooks_default/* /pb_hooks/ 2>/dev/null || true
